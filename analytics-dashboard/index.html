@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoTogether Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .metric-label {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .metric-change {
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .positive {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .negative {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .goal-progress {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .goal-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .progress-bar {
+            background: #f0f0f0;
+            border-radius: 25px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            border-radius: 25px;
+            transition: width 0.3s ease;
+        }
+        
+        .goal-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .goal-stat {
+            text-align: center;
+        }
+        
+        .goal-stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .goal-stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .goal-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🎉 GoTogether Analytics</h1>
+            <p>Real-time insights for friend-based event planning</p>
+        </div>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="totalUsers">0</div>
+                <div class="metric-label">Total Users</div>
+                <div class="metric-change positive">+0 today</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="dailyActive">0</div>
+                <div class="metric-label">Daily Active Users</div>
+                <div class="metric-change positive">+0% vs yesterday</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="eventsCreated">0</div>
+                <div class="metric-label">Events Created</div>
+                <div class="metric-change positive">+0 this week</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="friendInvites">0</div>
+                <div class="metric-label">Friend Invites Sent</div>
+                <div class="metric-change positive">+0% conversion</div>
+            </div>
+        </div>
+        
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-title">User Growth (Last 30 Days)</div>
+                <canvas id="userGrowthChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Event Activity</div>
+                <canvas id="eventActivityChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="goal-progress">
+            <div class="goal-title">🎯 Goal Progress: 1,000 Users by Q2 2026</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div style="margin: 10px 0;">
+                <strong>0 / 1,000 users</strong> (0% complete)
+            </div>
+            
+            <div class="goal-stats">
+                <div class="goal-stat">
+                    <div class="goal-stat-value">167</div>
+                    <div class="goal-stat-label">Monthly Target</div>
+                </div>
+                <div class="goal-stat">
+                    <div class="goal-stat-value">42</div>
+                    <div class="goal-stat-label">Weekly Target</div>
+                </div>
+                <div class="goal-stat">
+                    <div class="goal-stat-value">6</div>
+                    <div class="goal-stat-label">Daily Target</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demonstration
+        const sampleData = {
+            users: [0, 5, 12, 18, 25, 32, 45, 58, 72, 89, 105, 123, 142, 165, 189, 215, 243, 272, 304, 338, 375, 414, 456, 501, 548, 598, 651, 707, 766, 828],
+            events: [0, 2, 8, 15, 28, 42, 61, 85, 112, 144, 180, 221, 267, 318, 374, 435, 501, 572, 648, 729, 815, 906, 1002, 1103, 1209, 1320, 1436, 1557, 1683, 1814]
+        };
+
+        // Update current metrics
+        function updateMetrics() {
+            const currentUsers = sampleData.users[sampleData.users.length - 1];
+            const dailyActive = Math.floor(currentUsers * 0.3); // 30% daily active rate
+            const eventsCreated = sampleData.events[sampleData.events.length - 1];
+            const friendInvites = Math.floor(currentUsers * 2.5); // Average 2.5 invites per user
+            
+            document.getElementById('totalUsers').textContent = currentUsers;
+            document.getElementById('dailyActive').textContent = dailyActive;
+            document.getElementById('eventsCreated').textContent = eventsCreated;
+            document.getElementById('friendInvites').textContent = friendInvites;
+            
+            // Update progress bar
+            const progressPercent = (currentUsers / 1000) * 100;
+            document.querySelector('.progress-fill').style.width = progressPercent + '%';
+        }
+
+        // User Growth Chart
+        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+        new Chart(userGrowthCtx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 30}, (_, i) => `Day ${i + 1}`),
+                datasets: [{
+                    label: 'Total Users',
+                    data: sampleData.users,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Event Activity Chart
+        const eventActivityCtx = document.getElementById('eventActivityChart').getContext('2d');
+        new Chart(eventActivityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Events Created',
+                    data: [45, 38, 52, 61, 78, 95, 87],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(102, 126, 234, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Initialize
+        updateMetrics();
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Add some randomness to simulate real data
+            const lastUser = sampleData.users[sampleData.users.length - 1];
+            const newUsers = lastUser + Math.floor(Math.random() * 3);
+            sampleData.users.push(newUsers);
+            
+            const lastEvent = sampleData.events[sampleData.events.length - 1];
+            const newEvents = lastEvent + Math.floor(Math.random() * 8);
+            sampleData.events.push(newEvents);
+            
+            updateMetrics();
+        }, 5000); // Update every 5 seconds
+    </script>
+</body>
+</html>
